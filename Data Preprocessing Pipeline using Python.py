@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
+def data_preprocessing_pipeline(data):
+    #Identify numeric and categorical features
+    numeric_features = data.select_dtypes(include=['float', 'int']).columns
+    categorical_features = data.select_dtypes(include=['object']).columns
+
+    #Handle missing values in numeric features
+    data[numeric_features] = data[numeric_features].fillna(data[numeric_features].mean())
+
+    #Detect and handle outliers in numeric features using IQR
+    for feature in numeric_features:
+        Q1 = data[feature].quantile(0.25)
+        Q3 = data[feature].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - (1.5 * IQR)
+        upper_bound = Q3 + (1.5 * IQR)
+        data[feature] = np.where((data[feature] < lower_bound) | (data[feature] > upper_bound),
+                                 data[feature].mean(), data[feature])
+
+    #Normalize numeric features
+    scaler = StandardScaler()
+    scaled_data = scaler.fit_transform(data[numeric_features])
+    data[numeric_features] = scaler.transform(data[numeric_features])
+
+    #Handle missing values in categorical features
+    data[categorical_features] = data[categorical_features].fillna(data[categorical_features].mode().iloc[0])
+
+    return data
+
+
+# In[4]:
+
+
+data = pd.read_csv('sample data.csv')
+
+
+# In[5]:
+
+
+data.head()
+
+
+# In[6]:
+
+
+cleaned_data = data_preprocessing_pipeline(data)
+print("Preprocessed Data:")
+print(cleaned_data)
+
+
+# In[ ]:
+
+
+
+
